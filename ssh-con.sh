@@ -1,3 +1,3 @@
 #!bash
 
-ssh -i "isucon11-qualify.pem" ubuntu@ec2-52-68-114-79.ap-northeast-1.compute.amazonaws.com
+ssh -i "isucon11-qualify.pem" ubuntu@ec2-35-77-94-200.ap-northeast-1.compute.amazonaws.com

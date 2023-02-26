@@ -1172,7 +1172,7 @@ func getTrend(c echo.Context) error {
 	}
 
 	type IsuConditionRes struct {
-		IsuID      int       `db:"id"`
+		IsuID      int       `db:"isu_id"`
 		ID         int       `db:"id"`
 		JIAIsuUUID string    `db:"jia_isu_uuid"`
 		Timestamp  time.Time `db:"timestamp"`
@@ -1193,7 +1193,7 @@ func getTrend(c echo.Context) error {
 		conditions := []IsuConditionRes{}
 		err = db.Select(&conditions,
 			"SELECT "+
-				"isu.id, isu_condition.id, isu_condition.jia_isu_uuid, isu_condition.timestamp, isu_condition.is_sitting, isu_condition.condition, isu_condition.message, isu_condition.created_at "+
+				"isu.id as isu_id, isu_condition.id, isu_condition.jia_isu_uuid, isu_condition.timestamp, isu_condition.is_sitting, isu_condition.condition, isu_condition.message, isu_condition.created_at "+
 				"FROM isu JOIN isu_condition ON isu.jia_isu_uuid = isu_condition.jia_isu_uuid WHERE isu.character = ? ORDER BY isu_condition.timestamp DESC",
 			character.Character,
 		)
