@@ -1204,10 +1204,14 @@ func postIsuCondition(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
+		isSitting := 0
+		if cond.IsSitting {
+			isSitting = 1
+		}
 		if index != 0 {
 			values += ",\n"
 		}
-		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
+		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, isSitting, cond.Condition, cond.Message)
 		// _, err = tx.Exec(
 		// 	"INSERT INTO `isu_condition`"+
 		// 		"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
