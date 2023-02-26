@@ -1196,9 +1196,16 @@ func postIsuCondition(c echo.Context) error {
 		return c.String(http.StatusNotFound, "not found: isu")
 	}
 
-	values := ""
 	firstFlag := true
 	countValue := 0
+	type InsertInfo struct {
+		JiaIsuUuid string `db:"jia_isu_uuid"`
+		Timestamp  time.Time
+		IsSitting  bool `db:"is_sitting"`
+		Condition  string
+		Message    string
+	}
+	var values []InsertInfo
 	for _, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
 
@@ -1206,21 +1213,24 @@ func postIsuCondition(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
-		isSitting := 0
-		if cond.IsSitting {
-			isSitting = 1
-		}
 		if !firstFlag {
-			values += ", "
 			firstFlag = false
 		}
-		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, isSitting, cond.Condition, cond.Message)
+		// values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, isSitting, cond.Condition, cond.Message)
+		values = append(values,
+			InsertInfo{
+				JiaIsuUuid: jiaIsuUUID,
+				Timestamp:  timestamp,
+				IsSitting:  cond.IsSitting,
+				Condition:  cond.Condition,
+				Message:    cond.Message,
+			})
 		countValue += 1
 		if countValue >= 500 {
 			_, err = tx.Exec(
-				"INSERT INTO `isu_condition`" +
-					"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
-					"    VALUES " + values)
+				"INSERT INTO `isu_condition`"+
+					"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
+					"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
 			if err != nil {
 				c.Logger().Errorf("db error: %v", err)
 				return c.NoContent(http.StatusInternalServerError)
