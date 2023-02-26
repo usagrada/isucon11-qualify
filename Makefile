@@ -12,6 +12,5 @@ slow-query-show:
 
 app-setup:
 	sudo cp webapp/main.go /home/isucon/webapp/go
-	cd /home/isucon/webapp/go
-	go build -o isucondition main.go
+	cd /home/isucon/webapp/go && go build -o isucondition main.go
 	sudo systemctl restart isucondition.go
