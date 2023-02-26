@@ -1197,14 +1197,17 @@ func postIsuCondition(c echo.Context) error {
 	}
 
 	var values = ""
-	for _, cond := range req {
+	for index, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
 
 		if !isValidConditionFormat(cond.Condition) {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
-		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s'),", jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
+		if index != 0 {
+			values += ",\n"
+		}
+		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
 		// _, err = tx.Exec(
 		// 	"INSERT INTO `isu_condition`"+
 		// 		"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
@@ -1218,7 +1221,7 @@ func postIsuCondition(c echo.Context) error {
 	_, err = tx.Exec(
 		"INSERT INTO `isu_condition`" +
 			"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
-			values)
+			"    VALUES " + values)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
