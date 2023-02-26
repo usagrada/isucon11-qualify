@@ -1085,22 +1085,24 @@ func getTrend(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	type IsuConditionRes struct {
+		IsuID      int       `db:"id"`
+		ID         int       `db:"id"`
+		JIAIsuUUID string    `db:"jia_isu_uuid"`
+		Timestamp  time.Time `db:"timestamp"`
+		IsSitting  bool      `db:"is_sitting"`
+		Condition  string    `db:"condition"`
+		Message    string    `db:"message"`
+		CreatedAt  time.Time `db:"created_at"`
+	}
+
 	res := []TrendResponse{}
+	set := map[int]bool{}
 	for _, character := range characterList {
 		characterInfoIsuConditions := []*TrendCondition{}
 		characterWarningIsuConditions := []*TrendCondition{}
 		characterCriticalIsuConditions := []*TrendCondition{}
 		// isuList := []Isu{}
-		type IsuConditionRes struct {
-			IsuID      int       `db:"id"`
-			ID         int       `db:"id"`
-			JIAIsuUUID string    `db:"jia_isu_uuid"`
-			Timestamp  time.Time `db:"timestamp"`
-			IsSitting  bool      `db:"is_sitting"`
-			Condition  string    `db:"condition"`
-			Message    string    `db:"message"`
-			CreatedAt  time.Time `db:"created_at"`
-		}
 
 		conditions := []IsuConditionRes{}
 		err = db.Select(&conditions,
@@ -1114,8 +1116,14 @@ func getTrend(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		if len(conditions) > 0 {
-			isuLastCondition := conditions[0]
+		// if len(conditions) > 0 {
+		for _, condition := range conditions {
+			// isuLastCondition := conditions[0]
+			isuLastCondition := condition
+			if set[isuLastCondition.IsuID] {
+				continue
+			}
+			set[isuLastCondition.IsuID] = true
 			conditionLevel, err := calculateConditionLevel(isuLastCondition.Condition)
 			if err != nil {
 				c.Logger().Error(err)
