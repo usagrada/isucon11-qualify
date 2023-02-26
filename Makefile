@@ -9,3 +9,9 @@ SLOW_LOG=/var/log/mysql/mariadb-slow.log
 
 slow-query-show:
 	sudo mysqldumpslow -s t $(SLOW_LOG) | head -n 20
+
+app-setup:
+	sudo cp webapp/main.go /home/isucon/webapp/go
+	cd /home/isucon/webapp/go
+	go build -o isucondition main.go
+	sudo systemctl restart isucondition.go
