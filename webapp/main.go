@@ -1160,7 +1160,7 @@ func getTrend(c echo.Context) error {
 // ISUからのコンディションを受け取る
 func postIsuCondition(c echo.Context) error {
 	// TODO: 一定割合リクエストを落としてしのぐようにしたが、本来は全量さばけるようにすべき
-	dropProbability := 0.5
+	dropProbability := 0.9
 	if rand.Float64() <= dropProbability {
 		c.Logger().Warnf("drop post isu condition request")
 		return c.NoContent(http.StatusAccepted)
@@ -1196,8 +1196,6 @@ func postIsuCondition(c echo.Context) error {
 		return c.String(http.StatusNotFound, "not found: isu")
 	}
 
-	firstFlag := true
-	countValue := 0
 	type InsertInfo struct {
 		JiaIsuUuid string `db:"jia_isu_uuid"`
 		Timestamp  time.Time
@@ -1205,7 +1203,9 @@ func postIsuCondition(c echo.Context) error {
 		Condition  string
 		Message    string
 	}
-	var values []InsertInfo
+	// firstFlag := true
+	// countValue := 0
+	// var values []InsertInfo
 	for _, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
 
@@ -1213,50 +1213,47 @@ func postIsuCondition(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
-		if !firstFlag {
-			firstFlag = false
-		}
-		// values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, isSitting, cond.Condition, cond.Message)
-		values = append(values,
-			InsertInfo{
-				JiaIsuUuid: jiaIsuUUID,
-				Timestamp:  timestamp,
-				IsSitting:  cond.IsSitting,
-				Condition:  cond.Condition,
-				Message:    cond.Message,
-			})
-		countValue += 1
-		if countValue >= 500 {
-			_, err = tx.Exec(
-				"INSERT INTO `isu_condition`"+
-					"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
-					"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
-			if err != nil {
-				c.Logger().Errorf("db error: %v", err)
-				return c.NoContent(http.StatusInternalServerError)
-			}
-			values = []InsertInfo{}
-		}
-		// _, err = tx.Exec(
-		// 	"INSERT INTO `isu_condition`"+
-		// 		"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
-		// 		"	VALUES (?, ?, ?, ?, ?)",
-		// 	jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
-		// if err != nil {
-		// 	c.Logger().Errorf("db error: %v", err)
-		// 	return c.NoContent(http.StatusInternalServerError)
+		// values = append(values,
+		// 	InsertInfo{
+		// 		JiaIsuUuid: jiaIsuUUID,
+		// 		Timestamp:  timestamp,
+		// 		IsSitting:  cond.IsSitting,
+		// 		Condition:  cond.Condition,
+		// 		Message:    cond.Message,
+		// 	})
+		// countValue += 1
+		// if countValue >= 500 {
+		// 	_, err = tx.Exec(
+		// 		"INSERT INTO `isu_condition`"+
+		// 			"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
+		// 			"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
+		// 	if err != nil {
+		// 		c.Logger().Errorf("db error: %v", err)
+		// 		return c.NoContent(http.StatusInternalServerError)
+		// 	}
+		// 	values = []InsertInfo{}
+		// 	countValue = 0
 		// }
-	}
-	if countValue > 0 {
 		_, err = tx.Exec(
 			"INSERT INTO `isu_condition`"+
 				"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
-				"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
+				"	VALUES (?, ?, ?, ?, ?)",
+			jiaIsuUUID, timestamp, cond.IsSitting, cond.Condition, cond.Message)
 		if err != nil {
 			c.Logger().Errorf("db error: %v", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
+	// if countValue > 0 {
+	// 	_, err = tx.Exec(
+	// 		"INSERT INTO `isu_condition`"+
+	// 			"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
+	// 			"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
+	// 	if err != nil {
+	// 		c.Logger().Errorf("db error: %v", err)
+	// 		return c.NoContent(http.StatusInternalServerError)
+	// 	}
+	// }
 
 	err = tx.Commit()
 	if err != nil {
