@@ -491,7 +491,7 @@ func getIsuList(c echo.Context) error {
 	// }
 	err = tx.Select(
 		&isuList,
-		"SELECT * FROM `isu` JOIN `isu_condition` ON isu.jia_user_id = isu_condition.jia_user_id WHERE isu.jia_user_id = ? ORDER BY isu_condition.timestamp DESC",
+		"SELECT * FROM `isu` JOIN `isu_condition` ON isu.jia_isu_uuid = isu_condition.jia_isu_uuid WHERE isu.jia_user_id = ? ORDER BY isu_condition.timestamp DESC",
 		jiaUserID)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
