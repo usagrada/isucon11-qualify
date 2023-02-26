@@ -492,7 +492,7 @@ func getIsuList(c echo.Context) error {
 	err = tx.Select(
 		&isuList,
 		"SELECT * FROM `isu` JOIN `isu_condition` ON isu.jia_user_id = isu_condition.jia_user_id WHERE isu.jia_user_id = ? ORDER BY isu_condition.timestamp DESC",
-		jiaUserID, jiaUserID)
+		jiaUserID)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
