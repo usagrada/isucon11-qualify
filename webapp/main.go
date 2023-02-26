@@ -1249,9 +1249,9 @@ func postIsuCondition(c echo.Context) error {
 	}
 	if countValue > 0 {
 		_, err = tx.Exec(
-			"INSERT INTO `isu_condition`" +
-				"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
-				"    VALUES " + values)
+			"INSERT INTO `isu_condition`"+
+				"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
+				"    VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)", values)
 		if err != nil {
 			c.Logger().Errorf("db error: %v", err)
 			return c.NoContent(http.StatusInternalServerError)
