@@ -1196,8 +1196,10 @@ func postIsuCondition(c echo.Context) error {
 		return c.String(http.StatusNotFound, "not found: isu")
 	}
 
-	var values = ""
-	for index, cond := range req {
+	values := ""
+	firstFlag := true
+	countValue := 0
+	for _, cond := range req {
 		timestamp := time.Unix(cond.Timestamp, 0)
 
 		if !isValidConditionFormat(cond.Condition) {
@@ -1208,10 +1210,25 @@ func postIsuCondition(c echo.Context) error {
 		if cond.IsSitting {
 			isSitting = 1
 		}
-		if index != 0 {
-			values += ",\n"
+		if !firstFlag {
+			values += ", "
+			firstFlag = false
 		}
 		values += fmt.Sprintf("('%s', '%s', %d, '%s', '%s')", jiaIsuUUID, timestamp, isSitting, cond.Condition, cond.Message)
+		countValue += 1
+		if countValue >= 500 {
+			_, err = tx.Exec(
+				"INSERT INTO `isu_condition`" +
+					"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
+					"    VALUES " + values)
+			if err != nil {
+				c.Logger().Errorf("db error: %v", err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+			values = ""
+			firstFlag = true
+			countValue = 0
+		}
 		// _, err = tx.Exec(
 		// 	"INSERT INTO `isu_condition`"+
 		// 		"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)"+
@@ -1222,13 +1239,15 @@ func postIsuCondition(c echo.Context) error {
 		// 	return c.NoContent(http.StatusInternalServerError)
 		// }
 	}
-	_, err = tx.Exec(
-		"INSERT INTO `isu_condition`" +
-			"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
-			"    VALUES " + values)
-	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+	if countValue > 0 {
+		_, err = tx.Exec(
+			"INSERT INTO `isu_condition`" +
+				"	(`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)" +
+				"    VALUES " + values)
+		if err != nil {
+			c.Logger().Errorf("db error: %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	err = tx.Commit()
