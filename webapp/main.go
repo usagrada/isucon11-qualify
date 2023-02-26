@@ -1235,9 +1235,7 @@ func postIsuCondition(c echo.Context) error {
 				c.Logger().Errorf("db error: %v", err)
 				return c.NoContent(http.StatusInternalServerError)
 			}
-			values = ""
-			firstFlag = true
-			countValue = 0
+			values = []InsertInfo{}
 		}
 		// _, err = tx.Exec(
 		// 	"INSERT INTO `isu_condition`"+
